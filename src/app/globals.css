@@ -1,0 +1,161 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* TaskLOL-specific surfaces */
+  --color-surface: var(--surface);
+  --color-column: var(--column);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-priority-high: var(--priority-high);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #f5f6f8;
+  --surface: #ffffff;
+  --column: #eceef2;
+  --foreground: #0f1729;
+  --card: #ffffff;
+  --card-foreground: #0f1729;
+  --popover: #ffffff;
+  --popover-foreground: #0f1729;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1f5;
+  --secondary-foreground: #1e293b;
+  --muted: #eef1f5;
+  --muted-foreground: #5f6b7d;
+  --accent: #e9edf3;
+  --accent-foreground: #0f1729;
+  --destructive: #dc2626;
+  --warning: #b45309;
+  --success: #15803d;
+  --border: #dfe3e9;
+  --input: #d5dae2;
+  --ring: #2563eb;
+  --priority-high: #e5484d;
+  --priority-medium: #d97706;
+  --priority-low: #6b7a90;
+}
+
+.dark {
+  --background: #0b0f14;
+  --surface: #10151c;
+  --column: #131921;
+  --foreground: #e6ebf2;
+  --card: #18202a;
+  --card-foreground: #e6ebf2;
+  --popover: #18202a;
+  --popover-foreground: #e6ebf2;
+  --primary: #4f8cff;
+  --primary-foreground: #ffffff;
+  --secondary: #222c38;
+  --secondary-foreground: #d5dde8;
+  --muted: #1c242f;
+  --muted-foreground: #8d99aa;
+  --accent: #212a36;
+  --accent-foreground: #e6ebf2;
+  --destructive: #f2555a;
+  --warning: #f0a54a;
+  --success: #3fb86b;
+  --border: #242d39;
+  --input: #2c3644;
+  --ring: #4f8cff;
+  --priority-high: #f2555a;
+  --priority-medium: #f0a54a;
+  --priority-low: #8d99aa;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 30%, transparent);
+  }
+}
+
+@layer utilities {
+  /* Thin, unobtrusive scrollbars inside columns and sheets. */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--foreground) 18%, transparent) transparent;
+  }
+}
+
+@keyframes reaction-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes reaction-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-8deg) scale(1.08);
+  }
+  75% {
+    transform: rotate(8deg) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
