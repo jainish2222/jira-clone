@@ -2,141 +2,71 @@ import { z } from "zod";
 import type { ReactionCategory } from "@/types";
 
 /**
- * Meme reactions, one per status-change category.
+ * Meme reactions for each status change. Every category has one or more memes;
+ * the app picks one at random and never repeats the previous pick back-to-back.
  *
- * Two packs ship with TaskLOL; pick one with ACTIVE_PACK below:
+ * Two packs ship with TaskLOL; choose one with ACTIVE_PACK below:
  *   "india"   — famous Indian memes (default)
  *   "classic" — international classics
  *
- * To swap a single meme, drop files into public/memes/<pack>/ and change its paths.
+ * To add or swap a meme, drop files into public/memes/<pack>/ and add an entry.
  * Nothing else in the app needs to change. Supported:
  *   media: .mp4 .webm (video) or .gif .png .jpg .jpeg .webp (image)
  *   poster: a still image shown for reduced motion or if the video fails
  *   sound: .mp3 .ogg .wav .m4a (optional; viewers can mute it)
- * Leave media/sound out to show just the caption with a small animation.
+ * Keep files small (a few dozen KB) and MP4s "faststart" so they play instantly;
+ * all files are preloaded in the background once the board opens.
  * Only local files under /memes/ are allowed — no external URLs.
  */
 type MemePack = "india" | "classic";
 
 export const ACTIVE_PACK: MemePack = "india";
 
-const files = (pack: MemePack, name: string) => ({
+/** media + poster + sound that share one base name. */
+const meme = (pack: MemePack, name: string, entry: Omit<ReactionConfigInput, "media" | "poster" | "sound">): ReactionConfigInput => ({
   media: `/memes/${pack}/${name}.mp4`,
   poster: `/memes/${pack}/${name}.jpg`,
   sound: `/memes/${pack}/${name}.mp3`,
+  ...entry,
 });
 
-const PACKS: Record<MemePack, Record<ReactionCategory, ReactionConfigInput>> = {
+const PACKS: Record<MemePack, Record<ReactionCategory, ReactionConfigInput[]>> = {
   india: {
-    todo_to_in_progress: {
-      caption: "Abhi maza aayega na bhidu!",
-      blurb: "Work has officially begun.",
-      emoji: "😎",
-      ...files("india", "todo-to-in-progress"),
-      durationMs: 5000,
-    },
-    in_progress_to_done: {
-      caption: "7 crore! Absolute legend.",
-      blurb: "Kaun Banega Crorepati? You did.",
-      emoji: "🏆",
-      ...files("india", "in-progress-to-done"),
-      durationMs: 4500,
-    },
-    done_to_in_progress: {
-      caption: "Ye dukh kahe khatam nahi hota?",
-      blurb: "A finished task has returned.",
-      emoji: "😩",
-      ...files("india", "done-to-in-progress"),
-      durationMs: 5500,
-    },
-    in_progress_to_todo: {
-      caption: "Moye moye.",
-      blurb: "Back to the queue it goes.",
-      emoji: "💔",
-      ...files("india", "in-progress-to-todo"),
-      durationMs: 5500,
-    },
-    other_transition: {
-      caption: "Kuch toh gadbad hai!",
-      blurb: "Plot twist.",
-      emoji: "🕵️",
-      ...files("india", "other-transition"),
-      durationMs: 5000,
-    },
-    all_done: {
-      caption: "Jalwa hai hamara! Board clear.",
-      blurb: "Every single task is done.",
-      emoji: "😎",
-      ...files("india", "all-done"),
-      durationMs: 6000,
-    },
+    todo_to_in_progress: [
+      meme("india", "abhi-maza", { caption: "Abhi maza aayega na bhidu!", emoji: "😎", durationMs: 4500 }),
+      meme("india", "arey-baap-re", { caption: "Arey baap re, yaad aaya!", emoji: "😳", durationMs: 4500 }),
+    ],
+    in_progress_to_done: [
+      meme("india", "saat-crore", { caption: "7 crore! Absolute legend.", emoji: "🏆", durationMs: 4500 }),
+      meme("india", "shabash-beta", { caption: "Shabash beta, bahut badhiya!", emoji: "👏", durationMs: 4500 }),
+    ],
+    done_to_in_progress: [
+      meme("india", "ye-dukh", { caption: "Ye dukh kahe khatam nahi hota?", emoji: "😩", durationMs: 5000 }),
+      meme("india", "hey-bhagwan", { caption: "Hey Bhagwan! Phir se?", emoji: "🙏", durationMs: 4500 }),
+    ],
+    in_progress_to_todo: [
+      meme("india", "moye-moye", { caption: "Moye moye.", emoji: "💔", durationMs: 5000 }),
+      meme("india", "khel-khatam", { caption: "Khel khatam. Back to To Do.", emoji: "🫡", durationMs: 4500 }),
+    ],
+    other_transition: [
+      meme("india", "kuch-toh-gadbad", { caption: "Kuch toh gadbad hai!", emoji: "🕵️", durationMs: 4500 }),
+      meme("india", "achha-ji", { caption: "Achha ji? Aisa hai kya?", emoji: "🤨", durationMs: 4500 }),
+      meme("india", "baat-toh-sahi", { caption: "Baat toh sahi hai.", emoji: "😎", durationMs: 4000 }),
+    ],
+    all_done: [
+      meme("india", "jalwa", { caption: "Jalwa hai hamara! Board clear.", emoji: "😎", durationMs: 5000 }),
+      meme("india", "alag-level", { caption: "Board clear. Alag hi level ka banda!", emoji: "🔥", durationMs: 5000 }),
+    ],
   },
   classic: {
-    todo_to_in_progress: {
-      caption: "Fine. I'll do it myself.",
-      blurb: "Work has (reluctantly) begun.",
-      emoji: "😾",
-      ...files("classic", "todo-to-in-progress"),
-      durationMs: 4500,
-    },
-    in_progress_to_done: {
-      caption: "Absolute legend.",
-      blurb: "Locked in. Shipped it.",
-      emoji: "🏆",
-      ...files("classic", "in-progress-to-done"),
-      durationMs: 4000,
-    },
-    done_to_in_progress: {
-      caption: "Wait, it's not done?",
-      blurb: "A finished task has returned.",
-      emoji: "🤔",
-      ...files("classic", "done-to-in-progress"),
-      durationMs: 4500,
-    },
-    in_progress_to_todo: {
-      caption: "We need to talk.",
-      blurb: "Back to the queue it goes.",
-      emoji: "😱",
-      ...files("classic", "in-progress-to-todo"),
-      durationMs: 4500,
-    },
-    other_transition: {
-      caption: "Plot twist.",
-      blurb: "Everybody stay calm.",
-      emoji: "🌀",
-      ...files("classic", "other-transition"),
-      durationMs: 5500,
-    },
-    all_done: {
-      caption: "Board clear. Absolute legends.",
-      blurb: "Every single task is done.",
-      emoji: "🎉",
-      ...files("classic", "in-progress-to-done"),
-      durationMs: 5000,
-    },
+    todo_to_in_progress: [meme("classic", "todo-to-in-progress", { caption: "Fine. I'll do it myself.", emoji: "😾" })],
+    in_progress_to_done: [meme("classic", "in-progress-to-done", { caption: "Absolute legend.", emoji: "🏆", durationMs: 4000 })],
+    done_to_in_progress: [meme("classic", "done-to-in-progress", { caption: "Wait, it's not done?", emoji: "🤔" })],
+    in_progress_to_todo: [meme("classic", "in-progress-to-todo", { caption: "We need to talk.", emoji: "😱" })],
+    other_transition: [meme("classic", "other-transition", { caption: "Plot twist.", emoji: "🌀", durationMs: 5500 })],
+    all_done: [meme("classic", "in-progress-to-done", { caption: "Board clear. Absolute legends.", emoji: "🎉", durationMs: 5000 })],
   },
 };
-
-/**
- * Shown inside the empty To Do column while every task is done (no sound; it stays
- * on screen). Same path rules as reactions.
- */
-const BOARD_CLEAR_PACKS: Record<MemePack, { caption: string; note: string; media: string; poster: string }> = {
-  india: {
-    caption: "Apun hi bhagwan hai.",
-    note: "Sab kaam khatam. Every task is done.",
-    media: "/memes/india/board-clear.mp4",
-    poster: "/memes/india/board-clear.jpg",
-  },
-  classic: {
-    caption: "Inbox zero. Legendary.",
-    note: "Every task is done.",
-    media: "/memes/classic/in-progress-to-done.mp4",
-    poster: "/memes/classic/in-progress-to-done.jpg",
-  },
-};
-
-const RAW_REACTIONS = PACKS[ACTIVE_PACK];
 
 // Optional sub-folders (no dots allowed in folder names, so "../" can't sneak in), then a file name.
 const LOCAL = (exts: string) => new RegExp(`^/memes/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9._-]+\\.(${exts})$`, "i");
@@ -201,18 +131,33 @@ export function resolveReaction(input: ReactionConfigInput, fallbackCaption = "P
   };
 }
 
-export const REACTIONS: Record<ReactionCategory, ReactionConfig> = Object.fromEntries(
-  Object.entries(RAW_REACTIONS).map(([k, v]) => [k, resolveReaction(v)]),
-) as Record<ReactionCategory, ReactionConfig>;
+/** All memes per category for the active pack (each category has at least one). */
+export const REACTIONS: Record<ReactionCategory, ReactionConfig[]> = Object.fromEntries(
+  Object.entries(PACKS[ACTIVE_PACK]).map(([k, variants]) => [
+    k,
+    variants.length ? variants.map((v) => resolveReaction(v)) : [resolveReaction({ caption: "Plot twist." })],
+  ]),
+) as Record<ReactionCategory, ReactionConfig[]>;
 
-const boardClear = BOARD_CLEAR_PACKS[ACTIVE_PACK];
-const boardClearMedia = z.string().regex(MEDIA_RE).safeParse(boardClear.media);
-const boardClearPoster = z.string().regex(IMAGE_RE).safeParse(boardClear.poster);
+/**
+ * Picks a meme for a category at random, avoiding the one shown last time
+ * (so the same meme never plays twice in a row when there's a choice).
+ */
+export function pickVariant(count: number, previous: number | undefined, random: number = Math.random()): number {
+  if (count <= 1) return 0;
+  const choices = Array.from({ length: count }, (_, i) => i).filter((i) => i !== previous);
+  return choices[Math.min(choices.length - 1, Math.floor(random * choices.length))];
+}
 
-/** The empty-board celebration (validated the same way; falls back to caption only). */
-export const BOARD_CLEAR = {
-  caption: boardClear.caption,
-  note: boardClear.note,
-  media: boardClearMedia.success ? toMedia(boardClearMedia.data) : null,
-  poster: boardClearPoster.success ? boardClearPoster.data : null,
-};
+/** Every file the active pack uses, for background preloading. */
+export function reactionAssetUrls(): string[] {
+  const urls = new Set<string>();
+  for (const variants of Object.values(REACTIONS)) {
+    for (const v of variants) {
+      if (v.media) urls.add(v.media.src);
+      if (v.sound) urls.add(v.sound);
+      if (v.poster) urls.add(v.poster);
+    }
+  }
+  return [...urls];
+}

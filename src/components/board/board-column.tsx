@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS, type Member, type Task, type TaskStatus } from "@/types";
-import { BoardClearCard } from "@/components/reactions/board-clear-card";
 import { SortableTaskCard } from "./task-card";
 
 const STATUS_DOT: Record<TaskStatus, string> = {
@@ -26,8 +25,6 @@ interface BoardColumnProps {
   filtering: boolean;
   /** True while a dragged card is hovering anywhere over this column. */
   isDropTarget: boolean;
-  /** Every task is done: celebrate in the empty columns. */
-  celebrate: boolean;
   onOpen(taskId: string): void;
   onAdd(status: TaskStatus): void;
 }
@@ -41,7 +38,6 @@ export function BoardColumn({
   today,
   filtering,
   isDropTarget,
-  celebrate,
   onOpen,
   onAdd,
 }: BoardColumnProps) {
@@ -95,20 +91,7 @@ export function BoardColumn({
                 onOpen={onOpen}
               />
             ))}
-            {tasks.length === 0 && celebrate && !isOver && status === "todo" && (
-              <li className="list-none">
-                <BoardClearCard />
-              </li>
-            )}
-            {tasks.length === 0 && celebrate && !isOver && status === "in_progress" && (
-              <li className="flex min-h-[96px] list-none flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center text-xs text-muted-foreground">
-                <span className="text-2xl" aria-hidden>
-                  ☕
-                </span>
-                <span className="mt-1">Kuch kaam nahi bacha. Chai peelo.</span>
-              </li>
-            )}
-            {tasks.length === 0 && !(celebrate && !isOver && status !== "done") && (
+            {tasks.length === 0 && (
               <li
                 className={cn(
                   "flex min-h-[96px] list-none flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center text-xs text-muted-foreground",

@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReactionProvider, useReactions, type ReactionRequest } from "@/components/reactions/reaction-provider";
 import { REACTIONS } from "@/config/reactions";
 
-const DONE = REACTIONS.in_progress_to_done;
+// Math.random is pinned to 0 below, so the first meme of each category is picked.
+const DONE = REACTIONS.in_progress_to_done[0];
 
 const request = (over: Partial<ReactionRequest> = {}): ReactionRequest => ({
   eventId: "evt-1",
@@ -48,6 +49,7 @@ function setReducedMotion(on: boolean) {
 }
 
 beforeEach(() => {
+  vi.spyOn(Math, "random").mockReturnValue(0);
   vi.useFakeTimers();
   setReducedMotion(false);
   localStorage.clear();
@@ -84,12 +86,43 @@ describe("meme reactions", () => {
     expect(screen.queryByTestId("reaction-overlay")).not.toBeInTheDocument();
   });
 
+  it("picks a different meme the next time the same move happens", () => {
+    expect(REACTIONS.in_progress_to_done.length).toBeGreaterThan(1);
+    setup();
+    act(() => play(request({ eventId: "a" })));
+    const first = screen.getByTestId("reaction-caption").textContent;
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss reaction" }));
+    act(() => play(request({ eventId: "b" })));
+    expect(screen.getByTestId("reaction-caption").textContent).not.toBe(first);
+  });
+
+  it("can cancel a reaction that turned out to be wrong", () => {
+    let cancel: (id: string) => void = () => {};
+    function GrabCancel() {
+      const ctx = useReactions();
+      useEffect(() => {
+        cancel = ctx.cancel;
+      }, [ctx.cancel]);
+      return null;
+    }
+    render(
+      <ReactionProvider>
+        <Grab />
+        <GrabCancel />
+      </ReactionProvider>,
+    );
+    act(() => play(request({ eventId: "local:1" })));
+    expect(screen.getByTestId("reaction-overlay")).toBeInTheDocument();
+    act(() => cancel("local:1"));
+    expect(screen.queryByTestId("reaction-overlay")).not.toBeInTheDocument();
+  });
+
   it("shows only one reaction at a time — the newest wins", () => {
     setup();
     act(() => play(request()));
     act(() => play(request({ eventId: "evt-2", category: "other_transition", toStatus: "todo", isSelf: true })));
     expect(screen.getAllByTestId("reaction-overlay")).toHaveLength(1);
-    expect(screen.getByTestId("reaction-caption")).toHaveTextContent(REACTIONS.other_transition.caption);
+    expect(screen.getByTestId("reaction-caption")).toHaveTextContent(REACTIONS.other_transition[0].caption);
     expect(screen.getByText("You moved TASK-007 to To Do")).toBeInTheDocument();
   });
 

@@ -186,7 +186,6 @@ function Board({ initial, me }: { initial: BoardSnapshot; me: Member }) {
           pending={state.pending}
           today={today}
           filtering={filtering}
-          allDone={totals.todo === 0 && totals.in_progress === 0 && totals.done > 0}
           onMove={board.moveTask}
           onOpen={handleOpen}
           onAdd={handleAdd}

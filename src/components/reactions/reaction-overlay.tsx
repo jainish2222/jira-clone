@@ -2,29 +2,31 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, X } from "lucide-react";
-import { REACTIONS } from "@/config/reactions";
+import type { ReactionConfig } from "@/config/reactions";
 import { usePrefersReducedMotion } from "@/hooks/use-media-preferences";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS } from "@/types";
 import type { ReactionRequest } from "./reaction-provider";
+import { cachedUrl } from "./media-cache";
 import { ReactionMediaView } from "./reaction-media";
 
 const FADE_MS = 250;
 
 /**
- * A small, non-blocking card in the corner. It never captures focus or blocks
- * the board, closes itself, and can be dismissed with the button or Esc.
+ * A short banner under the header. It never captures focus or blocks the board,
+ * closes itself, and can be dismissed with the button or Esc.
  */
 export function ReactionOverlay({
   reaction,
+  config,
   soundEnabled,
   onDismiss,
 }: {
   reaction: ReactionRequest;
+  config: ReactionConfig;
   soundEnabled: boolean;
   onDismiss: () => void;
 }) {
-  const config = REACTIONS[reaction.category];
   const reducedMotion = usePrefersReducedMotion();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [soundBlocked, setSoundBlocked] = useState(false);
@@ -54,7 +56,7 @@ export function ReactionOverlay({
   // Sound: created only when a reaction shows (nothing preloads at startup).
   useEffect(() => {
     if (!config.sound) return;
-    const audio = new Audio(config.sound);
+    const audio = new Audio(cachedUrl(config.sound));
     audio.preload = "auto";
     audio.volume = 0.7;
     audio.muted = !soundEnabled;

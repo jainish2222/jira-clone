@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { card, column, createTaskViaApi, dragCardTo, reloadBoard, signIn, uniqueTitle } from "./helpers";
 import { REACTIONS } from "../../src/config/reactions";
+import type { ReactionCategory } from "../../src/types";
+
+/** Any of the memes configured for a move (one is picked at random). */
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const anyCaption = (category: ReactionCategory) =>
+  new RegExp(`^(${REACTIONS[category].map((v) => escapeRegExp(v.caption)).join("|")})$`);
 
 test.describe("signing in", () => {
   test("redirects to sign-in, rejects a wrong password, then lets you in", async ({ page }) => {
@@ -111,13 +117,13 @@ test.describe("drag and drop with meme reactions", () => {
     await dragCardTo(page, title, "in_progress");
     const overlay = page.getByTestId("reaction-overlay");
     await expect(overlay).toHaveAttribute("data-reaction", "todo_to_in_progress");
-    await expect(page.getByTestId("reaction-caption")).toHaveText(REACTIONS.todo_to_in_progress.caption);
+    await expect(page.getByTestId("reaction-caption")).toHaveText(anyCaption("todo_to_in_progress"));
     await expect(column(page, "in_progress").getByText(title)).toBeVisible();
     await page.getByRole("button", { name: "Dismiss reaction" }).click();
 
     await dragCardTo(page, title, "done");
     await expect(overlay).toHaveAttribute("data-reaction", "in_progress_to_done");
-    await expect(page.getByTestId("reaction-caption")).toHaveText(REACTIONS.in_progress_to_done.caption);
+    await expect(page.getByTestId("reaction-caption")).toHaveText(anyCaption("in_progress_to_done"));
 
     await reloadBoard(page);
     await expect(column(page, "done").getByText(title)).toBeVisible();

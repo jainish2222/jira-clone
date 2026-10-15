@@ -35,8 +35,6 @@ interface BoardColumnsProps {
   pending: Record<string, number>;
   today: string;
   filtering: boolean;
-  /** Every task is done (To Do and In Progress are empty). */
-  allDone: boolean;
   onMove(taskId: string, toStatus: TaskStatus, prevId: string | null, nextId: string | null): void;
   onOpen(taskId: string): void;
   onAdd(status: TaskStatus): void;
@@ -60,7 +58,6 @@ export function BoardColumns({
   pending,
   today,
   filtering,
-  allDone,
   onMove,
   onOpen,
   onAdd,
@@ -256,7 +253,6 @@ export function BoardColumns({
             today={today}
             filtering={filtering}
             isDropTarget={overStatus === status}
-            celebrate={allDone && !filtering && !activeId}
             onOpen={handleOpen}
             onAdd={onAdd}
           />

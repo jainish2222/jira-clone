@@ -107,18 +107,21 @@ People can change their own password from the account menu. Doing so signs out t
 
 Two packs ship with the app. Choose one with `ACTIVE_PACK` in [`src/config/reactions.ts`](src/config/reactions.ts).
 
-**`india` (default):**
+**`india` (default):** each move picks one of several memes at random and never repeats the last one.
 
-| Transition | Caption | Meme (with sound) |
-|---|---|---|
-| To Do → In Progress | "Abhi maza aayega na bhidu!" | Johnny Lever |
-| In Progress → Done | "7 crore! Absolute legend." | Amitabh Bachchan, KBC |
-| Done → In Progress | "Ye dukh kahe khatam nahi hota?" | Vicky Kaushal, *Masaan* (with *Bhare Naina*) |
-| In Progress → To Do | "Moye moye." | *Moye moye* |
-| Any other change | "Kuch toh gadbad hai!" | ACP Pradyuman, *CID* |
-| **Last open task → Done** (board cleared) | "Jalwa hai hamara! Board clear." | Munna Bhaiya, *Mirzapur* |
+| Transition | Memes (each with sound) |
+|---|---|
+| To Do → In Progress | *Abhi maza aayega na bhidu!* · *Arey baap re, yaad aaya!* |
+| In Progress → Done | *7 crore!* (KBC) · *Shabash beta, bahut badhiya!* (*Mirzapur*) |
+| Done → In Progress | *Ye dukh kahe khatam nahi hota?* (*Masaan*) · *Hey Bhagwan!* |
+| In Progress → To Do | *Moye moye* · *Khel khatam* |
+| Any other change | *Kuch toh gadbad hai!* (*CID*) · *Achha ji, aisa hai kya?* · *Baat toh sahi hai* |
+| **Last open task → Done** (board cleared) | *Jalwa hai hamara!* (*Mirzapur*) · *Woh alag hi level ka banda tha* |
 
-While every task is done, the empty To Do column shows Gaitonde's *"Apun hi bhagwan hai"* (*Sacred Games*), and In Progress says *"Kuch kaam nahi bacha. Chai peelo."* The board-cleared reaction is decided on the server, so every teammate sees the same celebration.
+Why reactions feel instant:
+- **Small files:** the clips are re-encoded to about 20–140 KB, with `faststart` so playback begins before the download finishes.
+- **Preloaded:** once the board opens, every meme file is quietly loaded into memory.
+- **No waiting on the database:** the person moving a card sees the meme on drop (typically under 100 ms). If the save fails, the meme closes and the card goes back. Teammates see it after the server has saved the change.
 
 **`classic`:** a screaming cat, the *Yippee* creature, the confused math lady, SpongeBob panic, and The Office's *Everybody stay calm!*
 

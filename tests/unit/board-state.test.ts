@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { boardReducer, initialBoardState, shouldAccept, type BoardState } from "@/components/board/board-state";
 import { reconnectDelay } from "@/components/board/use-live-updates";
 import { describeEvent } from "@/lib/format";
-import { resolveReaction, REACTIONS } from "@/config/reactions";
+import { pickVariant, reactionAssetUrls, resolveReaction, REACTIONS } from "@/config/reactions";
 import { REACTION_CATEGORIES, type BoardEvent, type BoardSnapshot, type Member, type Task } from "@/types";
 
 const T0 = "2026-01-01T00:00:00.000Z";
@@ -120,13 +120,36 @@ describe("activity descriptions", () => {
 });
 
 describe("reaction configuration", () => {
-  it("has all five categories with a caption, video, poster and sound", () => {
+  it("has memes for every category, each with a caption, video, poster and sound", () => {
     for (const c of REACTION_CATEGORIES) {
-      expect(REACTIONS[c].caption.length, c).toBeGreaterThan(0);
-      expect(REACTIONS[c].media?.kind, c).toBe("video");
-      expect(REACTIONS[c].poster, c).toMatch(/^\/memes\//);
-      expect(REACTIONS[c].sound, c).toMatch(/\.mp3$/);
+      expect(REACTIONS[c].length, c).toBeGreaterThan(0);
+      for (const v of REACTIONS[c]) {
+        expect(v.caption.length, c).toBeGreaterThan(0);
+        expect(v.media?.kind, c).toBe("video");
+        expect(v.poster, c).toMatch(/^\/memes\//);
+        expect(v.sound, c).toMatch(/\.mp3$/);
+      }
     }
+  });
+
+  it("offers more than one meme for every move in the Indian pack", () => {
+    for (const c of REACTION_CATEGORIES) expect(REACTIONS[c].length, c).toBeGreaterThanOrEqual(2);
+  });
+
+  it("never picks the same meme twice in a row when there is a choice", () => {
+    for (const r of [0, 0.3, 0.6, 0.99]) {
+      expect(pickVariant(2, 0, r)).toBe(1);
+      expect(pickVariant(2, 1, r)).toBe(0);
+      expect(pickVariant(3, 1, r)).not.toBe(1);
+    }
+    expect(pickVariant(1, 0)).toBe(0);
+    expect(pickVariant(3, undefined, 0.99)).toBe(2);
+  });
+
+  it("lists every file for background preloading", () => {
+    const urls = reactionAssetUrls();
+    expect(urls.length).toBeGreaterThan(REACTION_CATEGORIES.length * 2);
+    expect(urls.every((u) => u.startsWith("/memes/"))).toBe(true);
   });
 
   it("allows meme packs in sub-folders", () => {

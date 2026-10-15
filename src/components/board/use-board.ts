@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { toast } from "sonner";
 import { api, ApiError, friendlyError, newRequestId } from "@/lib/api-client";
 import { positionBetween } from "@/lib/tasks/position";
+import { getReactionCategory } from "@/lib/tasks/transitions";
 import { useReactions } from "@/components/reactions/reaction-provider";
 import {
   HISTORY_EVENT_TYPES,
@@ -46,7 +47,9 @@ export function useBoard(initial: BoardSnapshot, me: Member) {
     stateRef.current = state;
   }, [state]);
 
-  const { play } = useReactions();
+  const { play, cancel } = useReactions();
+  /** Tasks whose reaction this tab already showed instantly on drop (taskId -> local reaction id). */
+  const instantReactions = useRef(new Map<string, string>());
   const [liveActivity, setLiveActivity] = useState<BoardEvent[]>([]);
   const [unseenActivity, setUnseenActivity] = useState(0);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -110,7 +113,9 @@ export function useBoard(initial: BoardSnapshot, me: Member) {
 
       if (event.type === "status_changed" && event.reaction && event.task) {
         const isSelf = event.actorId === me.id;
-        if (isSelf || stateRef.current.settings.reactionVisibility === "everyone") {
+        // Our own drag already played its meme the moment the card was dropped.
+        const alreadyShown = isSelf && event.taskId !== null && instantReactions.current.has(event.taskId);
+        if (!alreadyShown && (isSelf || stateRef.current.settings.reactionVisibility === "everyone")) {
           play({
             eventId: event.id,
             category: event.reaction,
@@ -197,6 +202,32 @@ export function useBoard(initial: BoardSnapshot, me: Member) {
 
       dispatch({ type: "optimistic", task: { ...original, status: toStatus, position } });
       dispatch({ type: "pending", id: taskId, delta: 1 });
+
+      // Play the meme right away instead of waiting for the database round trip.
+      // Teammates still only see it after the server has saved the change.
+      let instantId: string | null = null;
+      if (statusChanged) {
+        const othersOpen = Object.values(s.tasks).some((t) => t.id !== taskId && t.status !== "done");
+        const category =
+          toStatus === "done" && !othersOpen ? "all_done" : getReactionCategory(original.status, toStatus);
+        if (category) {
+          instantId = `local:${taskId}:${Date.now()}`;
+          instantReactions.current.set(taskId, instantId);
+          play({
+            eventId: instantId,
+            category,
+            taskKey: original.key,
+            taskTitle: original.title,
+            toStatus,
+            actorName: me.name,
+            isSelf: true,
+          });
+        }
+      }
+      const forgetInstant = () => {
+        if (instantId && instantReactions.current.get(taskId) === instantId) instantReactions.current.delete(taskId);
+      };
+
       try {
         const res = await api<{ task: Task; events: BoardEvent[] }>(`/api/tasks/${taskId}`, {
           method: "PATCH",
@@ -208,9 +239,12 @@ export function useBoard(initial: BoardSnapshot, me: Member) {
         });
         dispatch({ type: "pending", id: taskId, delta: -1 });
         dispatch({ type: "upsert", task: res.task });
-        res.events.forEach(handleEvent);
+        res.events.forEach(handleEvent); // marks the saved event as seen, so the live stream won't replay it
+        forgetInstant();
       } catch (err) {
         dispatch({ type: "pending", id: taskId, delta: -1 });
+        if (instantId) cancel(instantId); // the move didn't happen, so neither does the meme
+        forgetInstant();
         if (err instanceof ApiError && err.code === "VERSION_CONFLICT") {
           const current = (err.details as { task?: Task } | undefined)?.task;
           if (current) dispatch({ type: "upsert", task: current });
@@ -228,7 +262,7 @@ export function useBoard(initial: BoardSnapshot, me: Member) {
         void refetch();
       }
     },
-    [handleEvent, refetch],
+    [handleEvent, refetch, play, cancel, me.name],
   );
 
   const deleteTask = useCallback(async (task: Task): Promise<void> => {

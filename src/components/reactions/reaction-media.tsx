@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ReactionConfig } from "@/config/reactions";
 import { cn } from "@/lib/utils";
+import { cachedUrl } from "./media-cache";
 
 type Stage = "media" | "poster" | "caption";
 
@@ -36,22 +37,22 @@ export function ReactionMediaView({
           loop
           playsInline
           preload="auto"
-          poster={config.poster ?? undefined}
+          poster={cachedUrl(config.poster) ?? undefined}
           onError={fallBack}
           aria-hidden
           // Autoplay of muted video is allowed everywhere; if it still fails we keep the poster frame.
           onCanPlay={(e) => void e.currentTarget.play().catch(() => undefined)}
         >
-          <source src={config.media.src} type={config.media.type} onError={fallBack} />
+          <source src={cachedUrl(config.media.src)} type={config.media.type} onError={fallBack} />
         </video>
       )}
       {stage === "media" && config.media?.kind === "image" && (
         // eslint-disable-next-line @next/next/no-img-element -- local meme GIFs must not be re-encoded
-        <img src={config.media.src} alt="" className="size-full object-contain" onError={fallBack} />
+        <img src={cachedUrl(config.media.src)} alt="" className="size-full object-contain" onError={fallBack} />
       )}
       {stage === "poster" && config.poster && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={config.poster} alt="" className="size-full object-contain" onError={() => setStage("caption")} />
+        <img src={cachedUrl(config.poster)} alt="" className="size-full object-contain" onError={() => setStage("caption")} />
       )}
       {stage === "caption" && (
         <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/25 via-neutral-900 to-neutral-950">
